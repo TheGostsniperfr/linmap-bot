@@ -1,0 +1,40 @@
+{{- if .Values.cronjob.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "linmap-bot.fullname" . }}-cron
+  labels:
+    {{- include "linmap-bot.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronjob.schedule | quote }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/component: cron
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: cron
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["python", "src/bot/cron_job.py"]
+              env:
+                - name: API_INTERNAL_URL
+                  value: "http://{{ include "linmap-bot.fullname" . }}-api:8000"
+                - name: LOG_LEVEL
+                  value: {{ .Values.config.logLevel | quote }}
+                - name: LINEAR_ORGANIZATION_SLUG
+                  value: {{ .Values.config.linearOrganizationSlug | quote }}
+                - name: DISCORD_CHANNEL_ID
+                  value: {{ .Values.config.discordChannelId | quote }}
+                - name: GDRIVE_FOLDER_ID
+                  value: {{ .Values.config.gdriveFolderId | quote }}
+                - name: GOOGLE_APPLICATION_CREDENTIALS
+                  value: "not-used-by-cron-pod"
+              envFrom:
+                - secretRef:
+                    name: {{ include "linmap-bot.fullname" . }}-secrets
+{{- end }}

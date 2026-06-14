@@ -16,11 +16,6 @@ class LinmapBot(commands.Bot):
         super().__init__(command_prefix="!", intents=intents)
         self.api_client = LinmapAPIClient()
 
-    async def setup_hook(self) -> None:
-        """Pre-activation lifecycle hook for sync and task registration."""
-        self.weekly_roadmap_sync.start()
-        logger.info("Background task scheduler initialized.")
-
     async def on_ready(self) -> None:
         logger.info(f"Logged in as {self.user} (ID: {self.user.id})")
         try:
@@ -29,25 +24,6 @@ class LinmapBot(commands.Bot):
             logger.info(f"Successfully synchronized {len(synced)} slash commands globally.")
         except Exception as e:
             logger.error(f"Slash command synchronization failed: {e}")
-
-    @tasks.loop(hours=168) # 7 Days
-    async def weekly_roadmap_sync(self) -> None:
-        """Automated weekly background task loop."""
-        logger.info("Executing scheduled weekly roadmap synchronization...")
-        channel = self.get_channel(settings.DISCORD_CHANNEL_ID)
-        if not channel:
-            logger.warning(f"Could not locate channel ID {settings.DISCORD_CHANNEL_ID} to post updates.")
-            return
-            
-        try:
-            # Weekly automation runs without zoom (complete view)
-            await self._run_pipeline_and_post(channel)
-        except Exception as e:
-            logger.error(f"Weekly scheduled generation failed: {e}")
-
-    @weekly_roadmap_sync.before_loop
-    async def before_weekly_sync(self):
-        await self.wait_until_ready()
 
     async def _run_pipeline_and_post(self, channel: discord.abc.Messageable, months: Optional[int] = None) -> None:
         """Executes API generation, downloads assets, and publishes rich Embed on Discord."""

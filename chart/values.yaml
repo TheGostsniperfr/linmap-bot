@@ -29,3 +29,7 @@ googleCredentials:
   # Mode can be 'file' (secret mounted as a file on disk) or 'env' (injected directly as env var)
   mode: "file"
 
+# CronJob configuration
+cronjob:
+  enabled: true
+  schedule: "0 7 * * 1" # Every Monday at 08:00 AM
