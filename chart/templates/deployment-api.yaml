@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "linmap-bot.fullname" . }}-api
+  labels:
+    {{- include "linmap-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "linmap-bot.fullname" . }}-api
+  template:
+    metadata:
+      labels:
+        app: {{ include "linmap-bot.fullname" . }}-api
+    spec:
+      containers:
+        - name: api
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/app/secrets/gdrive_credentials.json"
+          envFrom:
+            - secretRef:
+                name: {{ include "linmap-bot.fullname" . }}-secrets
+          volumeMounts:
+            - name: credentials-volume
+              mountPath: "/app/secrets"
+              readOnly: true
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: credentials-volume
+          secret:
+            secretName: {{ include "linmap-bot.fullname" . }}-secrets
+            items:
+              - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
+                path: gdrive_credentials.json

@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "linmap-bot.fullname" . }}-bot
+  labels:
+    {{- include "linmap-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "linmap-bot.fullname" . }}-bot
+  template:
+    metadata:
+      labels:
+        app: {{ include "linmap-bot.fullname" . }}-bot
+    spec:
+      containers:
+        - name: bot
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["python", "src/bot/discord_client.py"]
+          env:
+            - name: API_INTERNAL_URL
+              value: "http://{{ include "linmap-bot.fullname" . }}-api:8000"
+          envFrom:
+            - secretRef:
+                name: {{ include "linmap-bot.fullname" . }}-secrets
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

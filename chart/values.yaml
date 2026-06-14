@@ -1,0 +1,25 @@
+replicaCount: 1
+
+image:
+  repository: thegostsniperfr/linmap-bot
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+# Environment injection from existing secrets or direct definitions
+config:
+  logLevel: "INFO"
+  linearOrganizationSlug: "sigl-ubsi"
+  discordChannelId: "1234567890" # Replace with real channel id
+  gdriveFolderId: "gdrive_folder_alphanumeric_id"
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
