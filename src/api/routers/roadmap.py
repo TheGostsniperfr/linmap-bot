@@ -50,9 +50,16 @@ async def generate_roadmap(months: Optional[int] = None):
         # 4. Upload via Storage (Failsafe & Optional Fallback)
         excel_url = "Attached to Discord message"
         try:
-            # Only attempt GDrive upload if credentials path exists and isn't the default placeholder
-            if (os.path.exists(settings.GOOGLE_APPLICATION_CREDENTIALS) and 
-                settings.GDRIVE_FOLDER_ID != "gdrive_folder_alphanumeric_id"):
+            # Only attempt GDrive upload if credentials are configured and folder ID isn't the default placeholder
+            creds = settings.GOOGLE_APPLICATION_CREDENTIALS
+            is_creds_configured = False
+            if creds:
+                if creds.strip().startswith("{"):
+                    is_creds_configured = True
+                elif os.path.exists(creds):
+                    is_creds_configured = True
+
+            if is_creds_configured and settings.GDRIVE_FOLDER_ID != "gdrive_folder_alphanumeric_id":
                 logger.info("Initializing GoogleDriveStorage and uploading report...")
                 storage = GoogleDriveStorage()
                 excel_url = storage.upload_file(EXCEL_OUTPUT_PATH, "Linear_Roadmap.xlsx")

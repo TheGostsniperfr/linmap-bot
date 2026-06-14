@@ -22,21 +22,40 @@ class GoogleDriveStorage(BaseStorage):
         self.service = self._authenticate()
 
     def _authenticate(self):
-        """Authenticates using Service Account JSON file path."""
-        creds_path = settings.GOOGLE_APPLICATION_CREDENTIALS
-        if not os.path.exists(creds_path):
-            logger.error(f"Google credentials file not found at: {creds_path}")
-            raise FileNotFoundError(f"Missing Google credentials file at {creds_path}")
+        """Authenticates using Service Account JSON file path or JSON content directly."""
+        creds_content = settings.GOOGLE_APPLICATION_CREDENTIALS
+        if not creds_content:
+            logger.error("Google credentials are not set (GOOGLE_APPLICATION_CREDENTIALS is empty).")
+            raise ValueError("Google credentials are not set.")
+
+        # Check if credentials are provided directly as a JSON string
+        if creds_content.strip().startswith("{"):
+            try:
+                import json
+                info = json.loads(creds_content)
+                creds = service_account.Credentials.from_service_account_info(
+                    info,
+                    scopes=self.scopes
+                )
+                return build("drive", "v3", credentials=creds)
+            except Exception as e:
+                logger.error(f"Failed to load Google credentials from JSON string: {e}")
+                raise RuntimeError("Google Drive authentication from JSON string failed.") from e
+
+        # Fallback to loading from file
+        if not os.path.exists(creds_content):
+            logger.error(f"Google credentials file not found at: {creds_content}")
+            raise FileNotFoundError(f"Missing Google credentials file at {creds_content}")
             
         try:
             creds = service_account.Credentials.from_service_account_file(
-                creds_path, 
+                creds_content, 
                 scopes=self.scopes
             )
             return build("drive", "v3", credentials=creds)
         except Exception as e:
-            logger.error(f"Failed to initialize Google Drive client: {e}")
-            raise RuntimeError("Google Drive authentication failed.") from e
+            logger.error(f"Failed to initialize Google Drive client from file: {e}")
+            raise RuntimeError("Google Drive authentication from file failed.") from e
 
     def _find_existing_file_id(self, filename: str, folder_id: str) -> Optional[str]:
         """Queries Google Drive for an existing active file with the same name within the folder."""

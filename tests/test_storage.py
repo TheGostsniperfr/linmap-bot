@@ -87,3 +87,27 @@ class TestGoogleDriveStorage(unittest.TestCase):
         mock_exists.return_value = False
         with self.assertRaises(FileNotFoundError):
             self.storage.upload_file("/dummy/missing_file.xlsx", "Linear_Roadmap.xlsx")
+
+
+class TestGoogleDriveStorageJSON(unittest.TestCase):
+    @patch("src.storage.gdrive.settings")
+    @patch("src.storage.gdrive.build")
+    @patch("src.storage.gdrive.service_account.Credentials.from_service_account_info")
+    def test_init_with_json_string(self, mock_from_info, mock_build, mock_settings):
+        mock_settings.GOOGLE_APPLICATION_CREDENTIALS = '{"type": "service_account", "project_id": "test"}'
+        mock_settings.GDRIVE_FOLDER_ID = "mock_folder_id"
+        
+        mock_creds = MagicMock()
+        mock_from_info.return_value = mock_creds
+        
+        mock_service = MagicMock()
+        mock_build.return_value = mock_service
+        
+        storage = GoogleDriveStorage()
+        
+        mock_from_info.assert_called_once_with(
+            {"type": "service_account", "project_id": "test"},
+            scopes=["https://www.googleapis.com/auth/drive"]
+        )
+        mock_build.assert_called_once_with("drive", "v3", credentials=mock_creds)
+

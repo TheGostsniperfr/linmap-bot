@@ -23,3 +23,9 @@ resources:
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
+# Google credentials injection configuration
+googleCredentials:
+  # Mode can be 'file' (secret mounted as a file on disk) or 'env' (injected directly as env var)
+  mode: "file"
+

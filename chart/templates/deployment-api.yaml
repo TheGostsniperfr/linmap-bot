@@ -23,18 +23,23 @@ spec:
           ports:
             - containerPort: 8000
               name: http
+          {{- if eq .Values.googleCredentials.mode "file" }}
           env:
             - name: GOOGLE_APPLICATION_CREDENTIALS
               value: "/app/secrets/gdrive_credentials.json"
+          {{- end }}
           envFrom:
             - secretRef:
                 name: {{ include "linmap-bot.fullname" . }}-secrets
+          {{- if eq .Values.googleCredentials.mode "file" }}
           volumeMounts:
             - name: credentials-volume
               mountPath: "/app/secrets"
               readOnly: true
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      {{- if eq .Values.googleCredentials.mode "file" }}
       volumes:
         - name: credentials-volume
           secret:
@@ -42,3 +47,4 @@ spec:
             items:
               - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
                 path: gdrive_credentials.json
+      {{- end }}

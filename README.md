@@ -41,7 +41,7 @@ The application is configured exclusively via environment variables.
 | `DISCORD_TOKEN` | String | Discord Bot secret token | Yes |
 | `DISCORD_CHANNEL_ID` | Integer | Destination channel ID for automated updates | Yes |
 | `GDRIVE_FOLDER_ID` | String | Google Drive folder ID where Excel files are stored | Yes |
-| `GOOGLE_APPLICATION_CREDENTIALS` | String | Path to the Google Service Account JSON file | Yes |
+| `GOOGLE_APPLICATION_CREDENTIALS` | String | Path to the Google Service Account JSON file OR the raw JSON credentials content directly | Yes |
 
 ---
 
